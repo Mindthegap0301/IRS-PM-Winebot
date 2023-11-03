@@ -1,0 +1,1052 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "myUpskill Chatbot AWS CloudFormation Template to create Linux Instance with Cloudwatch Alarms for Disk Utilization, Memory and CPU and RDS",
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "General Configuration" },
+          "Parameters": [
+            "AppName",
+            "AppEnv",
+            "AppSupport" 
+          ]
+        },
+        {
+          "Label": { "default": "EC2 Configuration" },
+          "Parameters": [
+            "EC2InstanceAMIName",
+            "EC2InstanceType01",
+            "EC2KeyName01",
+            "VPC",
+            "PrivateSubnetAZa",
+            "PrivateSubnetAZb",
+            "PublicSubnet"
+          ]
+        },
+        {
+          "Label": { "default": "CloudWatch Alarm Parameters" },
+          "Parameters": [
+            "AlarmThreshHoldMem",
+            "AlarmThreshHoldCPU",
+            "AlarmThreshHoldDisk",
+            "UsagePeriod",
+            "EvaluationCount" 
+          ]
+        },
+        { "Label": { "default": "Application Filesystem" },
+          "Parameters": [
+        		"AppFSsize",
+            "AppMountPath"
+          ]
+        },
+        { "Label": { "default": "RDS DB Configuration" },
+          "Parameters": [
+            "DbMasterUsername",
+            "DbMasterPasswordTemporary",
+            "AllocatedStorage",
+            "MaxAllocatedStorage",
+            "StorageType",
+            "DbInstanceType",
+            "ApplyDeletionProtection",
+            "EnablePerformanceInsights",
+            "Engine",
+            "EngineVersion",
+            "StorageIops",
+            "DbInstancePort",
+            "AllowMinorVersionUpgrade",
+            "AllowMajorVersionUpgrade",
+            "PreferredMaintenanceWindow",
+            "PreferredBackupWindow",
+            "RdsBackupRetentionPeriod",
+            "MultiAz",
+            "DbName",
+            "UseDbSnapshot"
+          ]
+        }
+      ],
+      "ParameterLabels": {
+        "AppName": {
+          "default": "Application name e.g myupskill-chatbot "
+        },
+		    "AppEnv": {
+          "default": "Environment"
+        },
+        "AppSupport": {
+          "default": "Application Support Email"
+        },
+        "EC2InstanceType01": {
+          "default": "Instance Type"
+        },
+        "EC2KeyName01": {
+          "default": "SSH Key"
+        },
+        "EC2InstanceAMIName": {
+          "default": "AMI Name Ex: ami-082b1f4237bd816a1"
+        },
+        "VPC": {
+          "default": "VPC ID"
+        },
+        "PrivateSubnetAZa": {
+          "default": "Private Subnet ID for Availability Zone A"
+        },
+        "PrivateSubnetAZb": {
+          "default": "Private Subnet ID for Availability Zone B"
+        },
+        "PublicSubnet": {
+          "default": "Public Subnet ID"
+        },
+        "AlarmThreshHoldCPU": {
+          "default": "CPU Threshold"
+        },
+        "AlarmThreshHoldMem": {
+          "default": "Memory Threshold"
+        },
+        "AlarmThreshHoldDisk": {
+          "default": "Disk Threshold"
+        },
+        "UsagePeriod": {
+          "default": "DataPoint"
+        },
+        "EvaluationCount": {
+          "default": "Number of DataPoint"
+        },
+        "AppFSsize": {
+          "default": "EBS Volume Size of the Application FS."
+        },
+        "AppMountPath": {
+          "default": "Application Mount Path."
+        },
+        "DbMasterUsername": {
+          "default": "The database admin account username."
+        },
+        "DbMasterPasswordTemporary": {
+          "default": "DB temporary Master password"
+        },
+        "AllocatedStorage": {
+          "default": "Storage allocated to DB"
+        },
+        "MaxAllocatedStorage": {
+          "default": "The upper limit to which Amazon RDS can automatically scale the storage of the DB instance."
+        },
+        "StorageType": {
+          "default": "The Storage type for the DB Instance"
+        },
+        "DbInstanceType": {
+          "default": "Class of RDS instance machine"
+        },
+        "ApplyDeletionProtection": {
+          "default": "Apply Deletion Protection"
+        },
+        "EnablePerformanceInsights": {
+          "default": "Enable Performance Insights"
+        },
+        "Engine": {
+          "default": "The RDS Engine"
+        },
+        "EngineVersion": {
+          "default": "The RDS Engine type"
+        },
+        "StorageIops": {
+          "default": "The amount of iops for an iops storage type"
+        },
+        "DbInstancePort": {
+          "default": "PostgreSQL database port number"
+        },
+        "AllowMinorVersionUpgrade": {
+          "default": "Allow DBMS to upgrade if minor version changes in CFT"
+        },
+        "AllowMajorVersionUpgrade": {
+          "default": "Allow DBMS to upgrade if major version changes in CFT"
+        },
+        "PreferredMaintenanceWindow": {
+          "default": "Set the Preferred Maintenance Window for the RDS Instance."
+        },
+        "PreferredBackupWindow": {
+          "default": "Set the Preferred Backup Window for the RDS Instance"
+        },
+        "RdsBackupRetentionPeriod": {
+          "default": "RDS backup retention period"
+        },
+        "MultiAz": {
+          "default": "Determines whether or not MultiAZ is enabled"
+        },
+        "DbName": {
+          "default": "Name of App DB"
+        },
+        "UseDbSnapshot": {
+          "default": "Determines whether or not the Instance will be restored from a DB Snapshot"
+        }
+      }
+    }
+  },
+  "Parameters": {
+    "AppName": {
+      "Description": "The name of the application",
+      "Type": "String",
+      "Default": "myupskill-chatbot",
+      "AllowedPattern": "([a-z0-9\\-])+([a-z0-9])$"
+    },
+    "AppEnv": {
+      "Description": "The name of the application environment",
+      "Type": "String",
+      "AllowedValues": [ "dev", "nonprod", "prod" ],
+      "Default": "dev",
+      "ConstraintDescription": "Must be dev, nonprod, or prod"
+    },
+    "AppSupport": {
+      "Description": "Email Address of Application Support Team",
+      "Type": "String",
+      "Default": "N/A"
+    },
+    "EC2InstanceType01": {
+      "Description": "Type of Instance",
+      "Type": "String",
+      "Default": "t2.medium"
+    },
+    "EC2InstanceAMIName": {
+      "Description": "The name of the AMI to use for the instance. Ex: ami-082b1f4237bd816a1",
+      "Type":"String",      
+      "AllowedValues": [ 
+        "ami-082b1f4237bd816a1",
+        "ami-062550af7b9fa7d05"
+      ],
+      "ConstraintDescription": "Select which AMI you need to use",
+      "Default": "ami-082b1f4237bd816a1"
+    },
+    "EC2KeyName01": {
+      "Description": "Name of the PEM key to use for privileged access",
+      "Type": "String",
+      "Default": "mykeypair"
+    },
+    "VPC": {
+      "Description": "VPC ID",
+      "Type": "String",
+      "Default": "vpc-0b3611074343bd921"
+    },
+    "PrivateSubnetAZa": {
+      "Description": "Private Subnet ID for Availability Zone A",
+      "Type": "String",
+      "Default": "subnet-086ca13c47f39ed2c"
+    },
+    "PrivateSubnetAZb": {
+      "Description": "Private Subnet ID for Availability Zone B",
+      "Type": "String",
+      "Default": "subnet-05717dd22831fa6b6"
+    },
+    "PublicSubnet": {
+      "Description": "Public Subnet ID",
+      "Type": "String",
+      "Default": "subnet-0be341f4fe22e4941"
+    },
+    "UsagePeriod": {
+      "Description": "The period for which the utilization exceeds Threshold at a strech. This is considered as 1 DataPoint",
+      "Type": "String",
+      "Default": "300"
+    },
+    "EvaluationCount": {
+      "Description": "Number of DataPoints after which Alarm is triggered",
+      "Type": "String",
+      "Default": "3"
+    },
+    "AlarmThreshHoldMem": {
+      "Description": "Threshold value in percentage above or equal to (>=) which Alarm is triggered (only numeric eg.75 , do not use %)",
+      "Type": "String",
+      "Default": "75"
+    },
+    "AlarmThreshHoldCPU": {
+      "Description": "Threshold value in percentage above or equal to (>=) which Alarm is triggered (only numeric eg.75 , do not use %)",
+      "Type": "String",
+      "Default": "75"
+    },
+    "AlarmThreshHoldDisk": {
+      "Description": "Threshold value in percentage below or equal to (>=) which Alarm is triggered (only numeric eg.25 , do not use %)",
+      "Type": "String",
+      "Default": "25"
+    },
+    "AppFSsize":{
+      "Description": "EBS Volume Size of the Application FS",
+      "Type": "Number",
+      "Default": "5"
+    },
+	  "AppMountPath": {
+      "Description": "Filesystem to be Monitored (eg. /u01) ",
+      "Type": "String",
+      "Default": "/myupskill"
+    },
+    "DbMasterUsername": {
+      "Description": "The database admin account username.",
+      "Type": "String",
+      "NoEcho": "true",
+      "MinLength": "1",
+      "MaxLength": "16",
+      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
+      "ConstraintDescription": "Must begin with a letter and contain only alphanumeric characters.",
+      "Default":"postgres"
+      
+    },
+    "DbMasterPasswordTemporary": {
+      "Description": "DB temporary Master password",
+      "Type": "String",
+      "NoEcho": "true",
+      "Default":"changeme"
+    },
+    "AllocatedStorage": {
+      "Description": "Storage allocated to DB",
+      "Type": "String",
+      "Default":"5"
+    },
+    "MaxAllocatedStorage": {
+      "Description": "The upper limit to which Amazon RDS can automatically scale the storage of the DB instance.",
+      "Type": "String",
+      "Default":"10"
+    },
+    "StorageType": {
+      "Description": "The Storage type for the DB Instance",
+      "Type": "String",
+      "AllowedValues": [
+        "standard",
+        "gp2",
+        "io1"
+      ],
+      "Default":"gp2"
+    },
+    "DbInstanceType": {
+      "Description": "Class of RDS instance machine",
+      "Type": "String",
+      "Default":"db.t2.small"
+    },
+    "ApplyDeletionProtection": {
+      "Description": "Apply Deletion Protection",
+      "Type": "String",
+      "Default":"false"
+    },
+    "EnablePerformanceInsights": {
+      "Description": "Enable Performance Insights",
+      "Type": "String",
+      "Default":"false"
+    },
+    "Engine": {
+      "Description": "The RDS Engine",
+      "Type": "String",
+      "Default": "postgres"
+    },
+    "EngineVersion": {
+      "Description": "The RDS Engine type",
+      "Type": "String",
+      "MinLength": "1",
+      "Default":"11.13"
+    },
+    "StorageIops": {
+      "Description": "The amount of iops for an iops storage type",
+      "Type": "String"
+    },
+    "DbInstancePort": {
+      "Description": "PostgreSQL database port number",
+      "Type": "String",
+      "Default":"5432"
+    },
+    "AllowMinorVersionUpgrade": {
+      "Description": "Allow DBMS to upgrade if minor version changes in CFT",
+      "Type": "String",
+      "Default":"false"
+    },
+    "AllowMajorVersionUpgrade": {
+      "Description": "Allow DBMS to upgrade if major version changes in CFT",
+      "Type": "String",
+      "Default":"false"
+    },
+    "PreferredMaintenanceWindow": {
+      "Description": "Set the Preferred Maintenance Window for the RDS Instance.",
+      "Type": "String",
+      "Default":"sun:14:00-sun:15:00"
+    },
+    "PreferredBackupWindow": {
+      "Description": "Set the Preferred Backup Window for the RDS Instance",
+      "Type": "String",
+      "Default":"13:00-14:00"
+    },
+    "RdsBackupRetentionPeriod": {
+      "Description": "RDS backup retention period",
+      "Type": "String",
+      "Default":"2"
+    },
+    "MultiAz": {
+      "Description": "Determines whether or not MultiAZ is enabled",
+      "Type": "String",
+      "AllowedValues": [
+        "true",
+        "false"
+      ],
+      "Default":"false"
+    },
+    "DbName": {
+      "Description": "Name of App DB",
+      "Type": "String",
+      "Default":"upskill"
+    },
+    "UseDbSnapshot": {
+      "Description": "Determines whether or not the Instance will be restored from a DB Snapshot",
+      "Type": "String",
+      "Default":"false"
+    }
+  },
+  "Conditions" : {
+    "IsProd" : {"Fn::Equals" : [{"Ref" : "AppEnv"}, "prod"]},
+    "IsNitroBase": {
+      "Fn::Or":[
+        { "Condition": "GenPurInsType" },
+        { "Condition": "MemOptInstType" },
+        { "Condition": "CompOptInstType" },
+        { "Condition": "StorageOptInstType" },
+        { "Condition": "AcclCompInstType" }
+      ]
+    },
+    "GenPurInsType": {
+      "Fn::Or":[
+        { "Condition": "T3NitroBase" },
+        { "Condition": "T3aNitroBase" },
+        { "Condition": "M5NitroBase" },
+        { "Condition": "M5dNitroBase" },
+        { "Condition": "M5aNitroBase" },
+        { "Condition": "M5adNitroBase" },
+        { "Condition": "M5nNitroBase"},
+        { "Condition": "M5dnNitroBase" },
+        { "Condition": "M5znNitroBase" },
+        { "Condition": "M6gNitroBase" }
+      ]
+    },
+    "T3NitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3.nano"]},	 {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3.micro"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3.small"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3.medium"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3.xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3.2xlarge"]}
+      ]
+    },
+    "T3aNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3a.nano"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3a.micro"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3a.small"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3a.medium"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3a.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3a.xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t3a.2xlarge"]}
+      ]
+    },
+    "M5NitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5.xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5.2xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5.4xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5.8xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5.16xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5.24xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5.metal"]}
+      ]
+    },
+    "M5dNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5d.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5d.xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5d.2xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5d.4xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5d.8xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5d.16xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5d.24xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5d.metal"]}
+      ]
+    },
+    "M5aNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5a.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5a.xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5a.2xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5a.4xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5a.8xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5a.16xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5a.24xlarge"]}
+      ]
+    },
+    "M5adNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5ad.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5ad.xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5ad.2xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5ad.4xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5ad.8xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5ad.16xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5ad.24xlarge"]}
+      ]
+    },
+    "M5nNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5n.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5n.xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5n.2xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5n.4xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5n.8xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5n.16xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5n.24xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5n.metal"]}
+      ]
+    },
+    "M5dnNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5dn.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5dn.xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5dn.2xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5dn.4xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5dn.8xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5dn.16xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5dn.24xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5dn.metal"]}
+      ]
+    },
+    "M5znNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5zn.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5zn.xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5zn.2xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5zn.3xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5zn.6xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5zn.12xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m5zn.metal"]}
+      ]
+    },
+    "M6gNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6g.medium"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6g.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6g.xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6g.2xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6g.4xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6g.8xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6g.12xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6g.16xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6g.metal"]}
+      ]
+    },
+    "M6gdNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6gd.medium"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6gd.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6gd.xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6gd.2xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6gd.4xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6gd.8xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6gd.12xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6gd.16xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "m6gd.metal"]}
+      ]
+    },
+    "T4gNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t4g.nano"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t4g.micro"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t4g.small"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t4g.medium"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t4g.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t4g.xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "t4g.2xlarge"]}
+      ]
+    },
+    "MemOptInstType": {
+      "Fn::Or":[
+        { "Condition": "R5NitroBase" },
+        { "Condition": "R5dNitroBase"},
+        { "Condition": "R5aNitroBase" },
+        { "Condition": "R5adNitroBase"},
+        { "Condition": "R5bNitroBase" },
+        { "Condition": "R5nNitroBase"},
+        { "Condition": "R5dnNitroBase" },
+        { "Condition": "R6gNitroBase"},
+        { "Condition": "R6gdNitroBase" },
+        { "Condition": "Z1dNitroBase"}
+      ]
+    },
+    "R5NitroBase": {
+      "Fn::Or":[
+       	{"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5.xlarge"]},	{"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5.2xlarge"]},	{"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5.4xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5.8xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5.12xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5.16xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5.24xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5.metal"]}
+      ]
+    },
+    "R5dNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5d.large"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5d.xlarge"]},	{"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5d.2xlarge"]},	{"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5d.4xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5d.8xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5d.12xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5d.16xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5d.24xlarge"]}, {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5d.metal"]}
+      ]
+    },
+    "R5aNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5a.large"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5a.xlarge"]},	
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5a.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5a.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5a.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5a.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5a.16xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5a.24xlarge"]}
+      ]
+    },
+    "R5adNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5ad.large"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5ad.xlarge"]},	
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5ad.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5ad.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5ad.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5ad.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5ad.16xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5ad.24xlarge"]}
+      ]
+    },
+    "R5bNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5b.large"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5b.xlarge"]},	
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5b.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5b.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5b.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5b.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5b.16xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5b.24xlarge"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5b.metal"]}
+      ]
+    },
+    "R5nNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5n.large"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5n.xlarge"]},	
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5n.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5n.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5n.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5n.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5n.16xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5n.24xlarge"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5n.metal"]}
+      ]
+    },
+    "R5dnNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5dn.large"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5dn.xlarge"]},	
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5dn.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5dn.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5dn.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5dn.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5dn.16xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5dn.24xlarge"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r5dn.metal"]}
+      ]
+    },
+    "R6gNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6g.medium"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6g.large"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6g.xlarge"]},	
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6g.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6g.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6g.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6g.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6g.16xlarge"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6g.metal"]}
+      ]
+    },
+    "R6gdNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6gd.medium"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6gd.large"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6gd.xlarge"]},	
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6gd.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6gd.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6gd.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6gd.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6gd.16xlarge"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "r6gd.metal"]}
+      ]
+    },
+    "Z1dNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "z1d.large"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "z1d.xlarge"]},	
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "z1d.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "z1d.3xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "z1d.6xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "z1d.12xlarge"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "z1d.metal"]}
+      ]
+    },
+    "CompOptInstType": {
+      "Fn::Or":[
+        { "Condition": "C5NitroBase" },
+        { "Condition": "C5dNitroBase"},
+        { "Condition": "C5aNitroBase" },
+        { "Condition": "C5adNitroBase"},
+        { "Condition": "C5nNitroBase" },
+        { "Condition": "C6gNitroBase"},
+        { "Condition": "C6gdNitroBase" },
+        { "Condition": "C6gnNitroBase"}
+      ]
+    },
+    "C5NitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5.large"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5.xlarge"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5.9xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5.18xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5.24xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5.metal"]}
+
+      ]
+    },
+    "C5dNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5d.large"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5d.xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5d.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5d.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5d.9xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5d.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5d.18xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5d.24xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5d.metal"]}
+      ]
+    },
+    "C5aNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5a.large"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5a.xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5a.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5a.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5a.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5a.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5a.16xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5a.24xlarge"]}    
+      ]
+    },
+    "C5adNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5ad.large"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5ad.xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5ad.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5ad.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5ad.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5ad.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5ad.16xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5ad.24xlarge"]}
+      ]
+    },
+    "C5nNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5n.large"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5n.xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5n.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5n.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5n.9xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5n.18xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c5n.metal"]}
+      ]
+    },
+    "C6gNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6g.medium"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6g.large"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6g.xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6g.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6g.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6g.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6g.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6g.16xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6g.metal"]}
+      ]
+    },
+    "C6gdNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gd.medium"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gd.large"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gd.xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gd.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gd.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gd.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gd.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gd.16xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gd.metal"]}
+      ]
+    },
+    "C6gnNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gn.medium"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gn.large"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gn.xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gn.2xlarge"]},	
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gn.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gn.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gn.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "c6gn.16xlarge"]}
+      ]
+    },
+    "StorageOptInstType": {
+      "Fn::Or":[
+        { "Condition": "D3NitroBase" },
+        { "Condition": "D3enNitroBase"},
+        { "Condition": "I3enNitroBase" }
+      ]
+    },
+    "D3NitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "d3.xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "d3.2xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "d3.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "d3.8large"]}
+      ]
+    },
+    "D3enNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "d3en.xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "d3en.2xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "d3en.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "d3en.6xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "d3en.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "d3en.12xlarge"]}
+      ]
+    },
+    "I3enNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "i3en.large"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "i3en.xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "i3en.2xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "i3en.3xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "i3en.6xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "i3en.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "i3en.24xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "i3en.metal"]}
+      ]
+    },
+    "AcclCompInstType": {
+      "Fn::Or":[
+        { "Condition": "G4adNitroBase" },
+        { "Condition": "G4dnNitroBase"},
+        { "Condition": "Inf1NitroBase" },
+        { "Condition": "P3dnP4dNitroBase" }
+      ]
+    },
+    "G4adNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "g4ad.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "g4ad.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "g4ad.16xlarge"]}
+      ]
+    },
+    "G4dnNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "g4dn.xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "g4dn.2xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "g4dn.4xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "g4dn.8xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "g4dn.16xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "g4dn.12xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "g4dn.metal"]}
+      ]
+    },
+    "Inf1NitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "inf1.xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "inf1.2xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "inf1.6xlarge"]},
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "inf1.24xlarge"]}
+      ]
+    },
+    "P3dnP4dNitroBase": {
+      "Fn::Or":[
+        {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "p3dn.24xlarge"]},
+		    {"Fn::Equals": [{"Ref" : "EC2InstanceType01"}, "p4d.24xlarge"]}
+      ]
+    },    
+    "IsAML2" : {"Fn::Equals" : [{"Ref" : "EC2InstanceAMIName"}, "ubuntu-jammy-22.04-amd64-server-20230208"]},
+    "IsRhel7" : {"Fn::Equals" : [{"Ref" : "EC2InstanceAMIName"}, "ubuntu-focal-20.04-amd64-server-20230328"]},
+    "DbSnapshot": {
+      "Fn::Equals": [
+        { "Ref": "UseDbSnapshot" },
+        "true"
+      ]
+    },
+    "StorageTypeIops": {
+      "Fn::Equals": [
+        { "Ref": "StorageType" },
+        "io1"
+      ]
+    },
+    "MaxStorageAmount": {
+      "Fn::Equals": [
+        { "Ref": "MaxAllocatedStorage" },
+        0
+      ]
+    }
+  },  
+  "Resources": {   
+    "LNPPSecurityGroup01": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupName": { "Fn::Join": ["-", [ "nus-iss", {"Ref": "AppName"}, "sg", {"Ref": "AppEnv"} ] ] },
+        "GroupDescription": { "Fn::Join": ["-", [ "nus-iss", {"Ref": "AppName"}, "lamp-sg", {"Ref": "AppEnv"} ] ] },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "TCP",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "TCP",
+            "FromPort": "5432",
+            "ToPort": "5432",
+            "CidrIp": "172.16.1.0/24"
+          },
+          {
+            "IpProtocol": "TCP",
+            "FromPort": "5432",
+            "ToPort": "5432",
+            "CidrIp": "172.16.2.0/24"
+          },
+          {
+            "IpProtocol": "TCP",
+            "FromPort": "5432",
+            "ToPort": "5432",
+            "CidrIp": "172.16.3.0/24"
+          },
+          {
+            "IpProtocol": "TCP",
+            "FromPort": "5432",
+            "ToPort": "5432",
+            "CidrIp": "151.192.178.210/32"
+          },
+          {
+            "IpProtocol": "TCP",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": "151.192.178.210/32"
+          }             
+        ],
+        "VpcId": { "Ref": "VPC" },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": ["-", [ "nus-iss", {"Ref": "AppName"}, "lamp-sg", {"Ref": "AppEnv"} ] ] }
+          },
+          { "Key": "app_name", "Value": { "Ref": "AppName" } },
+          { "Key": "app_env", "Value": { "Ref": "AppEnv" } },
+          { "Key": "application_support_email", "Value": {"Ref": "AppSupport"} }
+        ]
+        }
+    },
+    "EC2Instance01": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "InstanceType": { "Ref": "EC2InstanceType01"},
+        "ImageId": { "Ref": "EC2InstanceAMIName" },
+        "KeyName": { "Ref": "EC2KeyName01" },
+        "NetworkInterfaces": [ {
+          "AssociatePublicIpAddress": "true",
+          "DeviceIndex": "0",
+          "GroupSet": [ { "Ref": "LNPPSecurityGroup01" } ],
+          "SubnetId": { "Ref" : "PublicSubnet" }
+        } ],
+        "DisableApiTermination": "false",
+        "BlockDeviceMappings" : [
+          {
+            "DeviceName" : "/dev/sda1",
+            "Ebs" : {
+                "DeleteOnTermination" : "true",
+                "VolumeSize" : "50",
+                "VolumeType" : "gp3",
+                "Encrypted" : "true"
+            }
+        },
+        {
+            "DeviceName" : "/dev/sdb",
+            "Ebs" : {
+              "DeleteOnTermination" : "true",
+              "VolumeSize" : { "Ref": "AppFSsize" },
+              "VolumeType" : "gp3",
+              "Encrypted" : "true"
+            }
+          }
+        ],
+        "Monitoring": {"Fn::If" : ["IsProd", true,false]},
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ "nus-iss", { "Ref": "AppName" }, "ec2","linux", { "Ref": "AppEnv" } ] ] }
+          },
+          {"Key": "app_name","Value": { "Ref": "AppName" }},
+          {"Key": "app_env","Value": { "Ref": "AppEnv" }},
+          {"Key": "application_support_email","Value": { "Ref": "AppSupport" }}
+        ],
+        "UserData" : {
+          "Fn::Base64" : {
+            "Fn::Join" : [ "",
+              [
+                "#!/bin/bash\n",
+                "echo \">>>>>>>>>>>>> UPDATE <<<<<<<<<<<<<\"\n",
+                "sudo apt-get update -y \n",
+                "sudo apt-get install postgresql-client -y \n",
+                "sudo apt install python3-pip -y",
+                "sudo apt-get install libpq-dev",
+                "sudo /usr/sbin/mkfs -t ext4 /dev/xvdb \n",
+                "sudo mkdir -p /myupskill\n",
+                "sudo export APP_MOUNTPOINT='", { "Ref": "AppMountPath" }, "'\n",
+                "sudo mount /dev/xvdb /myupskill \n",
+                "echo '/dev/xvdb       /myupskill    ext4    defaults,nofail 0' >> /etc/fstab \n",
+                "cd /myupskill \n",
+                "git clone https://github.com/aqborromeo/IRS-PM-2023-01-28-GRP1-myUpskill-Chatbot.git \n",
+                "cd /myupskill/IRS-PM-2023-01-28-GRP1-myUpskill-Chatbot/SystemCode/src/backend \n",
+                "mv .env.myupskill .env \n",
+                "source .env \n",
+                "sudo pip install poetry \n",
+                "sudo poetry install \n",
+                "sudo pip install python-dotenv flask flask-restful flask-cors Levenshtein flask_sqlalchemy flask_pydantic pandas sentence_transformers flask_seeder psycopg2 \n",
+                "echo \">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<\"\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    
+    "DbSubnetGroupLocal": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "Subnets available for the RDS DB Instance",
+        "SubnetIds": [
+          { "Ref": "PrivateSubnetAZa" },
+          { "Ref": "PrivateSubnetAZb" }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ "nus-iss", { "Ref": "AppName" }, "db-subnet-grp", { "Ref": "AppEnv" } ] ] }
+          },
+          {"Key": "app_name","Value": { "Ref": "AppName" }},
+          {"Key": "app_env","Value": { "Ref": "AppEnv" }},
+          {"Key": "application_support_email","Value": { "Ref": "AppSupport" }}
+        ]
+      }
+    },
+    "RDSDbInstance01": {
+      "Type": "AWS::RDS::DBInstance",
+      "DeletionPolicy": "Snapshot",
+      "Properties": {
+        "MasterUsername": { "Ref": "DbMasterUsername" },
+        "MasterUserPassword": { "Ref": "DbMasterPasswordTemporary" },
+        "AllocatedStorage": { "Ref": "AllocatedStorage" },
+        "MaxAllocatedStorage": {
+          "Fn::If": [
+            "MaxStorageAmount",
+            { "Ref": "AWS::NoValue" },
+            { "Ref": "MaxAllocatedStorage" }
+          ]
+        },
+        "StorageType": { "Ref": "StorageType" },
+        "DBInstanceClass": { "Ref": "DbInstanceType" },
+        "DBInstanceIdentifier": { "Fn::Join": [ "-", [ "nus-iss", { "Ref": "AppName" }, "rds-db", { "Ref": "AppEnv" } ] ] },
+        "DeletionProtection" : { "Ref": "ApplyDeletionProtection" },
+        "EnablePerformanceInsights" : { "Ref": "EnablePerformanceInsights" },
+        "EnableCloudwatchLogsExports": ["postgresql", "upgrade"],
+        "Engine": { "Ref": "Engine" },
+        "EngineVersion": { "Ref": "EngineVersion" },
+        "Iops": {
+          "Fn::If": [
+            "StorageTypeIops",
+            { "Ref": "StorageIops" },
+            { "Ref": "AWS::NoValue" }
+          ]
+        },
+        "PubliclyAccessible": "false",
+        "Port": { "Ref": "DbInstancePort" },
+        "AutoMinorVersionUpgrade": { "Ref": "AllowMinorVersionUpgrade" },
+        "AllowMajorVersionUpgrade": { "Ref": "AllowMajorVersionUpgrade" },
+        "PreferredMaintenanceWindow": { "Ref": "PreferredMaintenanceWindow" },
+        "PreferredBackupWindow": { "Ref": "PreferredBackupWindow" },
+        "BackupRetentionPeriod": { "Ref": "RdsBackupRetentionPeriod" },
+        "MultiAZ": { "Ref": "MultiAz" },
+        "DBName": {
+          "Fn::If": [ "DbSnapshot", { "Ref": "AWS::NoValue" }, { "Ref": "DbName" } ]
+        },
+        "DBSubnetGroupName": { "Ref": "DbSubnetGroupLocal" },
+        "DBSnapshotIdentifier": {
+          "Fn::If": [ 
+            "DbSnapshot", 
+            { "Fn::Join": [ "-", [ "nus-iss", { "Ref": "AppName" }, "rds-db-snapshot", { "Ref": "AppEnv" } ] ] }, 
+            { "Ref": "AWS::NoValue" } 
+          ]
+        },
+        "StorageEncrypted": "true",
+        "CopyTagsToSnapshot": "true",
+        "VPCSecurityGroups": [ { "Ref": "LNPPSecurityGroup01" } ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": { "Fn::Join": [ "-", [ "nus-iss", { "Ref": "AppName" }, "rds-db-snapshot", { "Ref": "AppEnv" } ] ] }
+          },
+          {"Key": "app_name","Value": { "Ref": "AppName" }},
+          {"Key": "app_env","Value": { "Ref": "AppEnv" }},
+          {"Key": "application_support_email","Value": { "Ref": "AppSupport" }}
+        ]
+      }
+    },
+   "WaitHandle": {"Type": "AWS::CloudFormation::WaitConditionHandle"}
+  },
+  "Outputs": {
+    "EC2InstanceID": {
+      "Description": "The id of the created EC2 instance",
+      "Value": {"Ref": "EC2Instance01"}
+    },
+    "EC2InstancePrivateIP": {
+      "Description": "The private IP of the created EC2 instance",
+      "Value": {"Fn::GetAtt": ["EC2Instance01", "PrivateIp"]}
+    }, 
+    "myUpskillDbUrl": {
+      "Description": "The myUpskill RDS DB Host Name",
+      "Value": { "Fn::GetAtt": [ "RDSDbInstance01", "Endpoint.Address" ] },
+      "Export": { "Name": { "Fn::Sub": "myupskill-db-url-${AppEnv}" } }
+    },
+
+    "myUpskillDbPort": {
+      "Description": "The myUpskill RDS DB Port",
+      "Value": { "Fn::GetAtt": [ "RDSDbInstance01", "Endpoint.Port" ] },
+      "Export": { "Name": { "Fn::Sub": "myupskill-db-port-${AppEnv}" } }
+    },
+    "myUpskillDbInstanceIdentifier": {
+      "Description": "The myUpskill DB Instance Identifier",
+      "Value": { "Ref": "RDSDbInstance01" },
+      "Export": { "Name": { "Fn::Sub": "myupskill-db-instance-identifier-${AppEnv}" } }
+    }
+  }
+}

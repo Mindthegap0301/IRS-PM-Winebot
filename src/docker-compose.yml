@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - 5000:5000
+    depends_on:
+      - postgres
+    environment:
+      - APPLICATION_ENV="${APPLICATION_ENV:-production}"
+      - APP_NAME="${APP_NAME:-upskill-api}"
+      - SECRET_KEY="${SECRET_KEY:-changeme}"
+      - SQLALCHEMY_DATABASE_URI="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/upskill"
+      - BCRYPT_HASH="${BCRYPT_HASH:-changeme}"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - 8080:5000
+    environment:
+      - VUE_APP_API=${VUE_APP_API:-http://0.0.0.0:5000/api}
+
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_DB=upskill
+    env_file:
+      - ./.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    # onrun:
+    #   psql -h=localhost -P=${POSTGRES_PASSWORD} -U=${POSTGRES_USER} -tc "SELECT 1 FROM pg_database WHERE datname = 'upskill'" | grep -q 1 || psql -h=localhost -P=${POSTGRES_PASSWORD}-U=${POSTGRES_USER}c "CREATE DATABASE upskill"
+    # ports:
+    #   - "5432:5432"
+    # networks:
+    #   - postgres
+    # restart: unless-stopped
+
+volumes:
+  postgres_data:

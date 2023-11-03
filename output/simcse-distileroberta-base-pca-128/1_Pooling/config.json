@@ -1,0 +1,16 @@
+<<<<<<< HEAD
+{
+  "word_embedding_dimension": 768,
+  "pooling_mode_cls_token": false,
+  "pooling_mode_mean_tokens": true,
+  "pooling_mode_max_tokens": false,
+  "pooling_mode_mean_sqrt_len_tokens": false
+=======
+{
+  "word_embedding_dimension": 768,
+  "pooling_mode_cls_token": false,
+  "pooling_mode_mean_tokens": true,
+  "pooling_mode_max_tokens": false,
+  "pooling_mode_mean_sqrt_len_tokens": false
+>>>>>>> e47ce0c3f7db9be48c589d9ac4f5ba092d85190e
+}

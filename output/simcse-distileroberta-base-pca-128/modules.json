@@ -1,0 +1,42 @@
+<<<<<<< HEAD
+[
+  {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+  },
+  {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+  },
+  {
+    "idx": 2,
+    "name": "dense",
+    "path": "2_Dense",
+    "type": "sentence_transformers.models.Dense"
+  }
+=======
+[
+  {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+  },
+  {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+  },
+  {
+    "idx": 2,
+    "name": "dense",
+    "path": "2_Dense",
+    "type": "sentence_transformers.models.Dense"
+  }
+>>>>>>> e47ce0c3f7db9be48c589d9ac4f5ba092d85190e
+]

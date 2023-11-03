@@ -1,0 +1,16 @@
+<<<<<<< HEAD
+{
+  "__version__": {
+    "sentence_transformers": "2.2.2",
+    "transformers": "4.34.1",
+    "pytorch": "2.1.0"
+  }
+=======
+{
+  "__version__": {
+    "sentence_transformers": "2.2.2",
+    "transformers": "4.34.1",
+    "pytorch": "2.1.0"
+  }
+>>>>>>> e47ce0c3f7db9be48c589d9ac4f5ba092d85190e
+}
